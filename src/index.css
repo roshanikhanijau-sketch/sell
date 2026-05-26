@@ -519,6 +519,13 @@ input[type="range"].rating-slider::-moz-range-thumb:hover {
   display: flex;
   flex-direction: column;
   height: 100%;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
+}
+
+.item-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg), 0 0 15px -3px hsla(217, 91%, 60%, 0.15);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .item-image-placeholder {
@@ -532,32 +539,57 @@ input[type="range"].rating-slider::-moz-range-thumb:hover {
   background-position: center;
   user-select: none;
   -webkit-user-select: none;
+  overflow: hidden;
+}
+
+.item-image-placeholder span {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item-card:hover .item-image-placeholder span {
+  transform: scale(1.15) rotate(3deg);
 }
 
 .item-category-tag {
   position: absolute;
   top: 1rem;
   left: 1rem;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
-  padding: 0.25rem 0.75rem;
+  background: rgba(13, 17, 28, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.3rem 0.8rem;
   border-radius: 99px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .item-price-tag {
   position: absolute;
   bottom: 1rem;
   right: 1rem;
-  background: var(--gradient-cyan);
-  padding: 0.35rem 0.85rem;
+  background: rgba(13, 17, 28, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0.4rem 0.9rem;
   border-radius: var(--radius-sm);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 800;
-  color: white;
-  box-shadow: var(--shadow-sm);
+  color: var(--secondary-color);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.01em;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item-card:hover .item-price-tag {
+  color: #ffffff;
+  background: var(--gradient-brand);
+  border-color: transparent;
+  box-shadow: 0 4px 15px hsla(217, 91%, 60%, 0.3);
 }
 
 .item-body {
