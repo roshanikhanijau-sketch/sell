@@ -1,0 +1,346 @@
+{
+  "users": [
+    {
+      "id": "sophia.senior@college.edu",
+      "email": "sophia.senior@college.edu",
+      "name": "Sophia Chen",
+      "college": "State Technical University",
+      "verified": true,
+      "badge": "Most Helpful Senior",
+      "habits": {
+        "sleeping": "Early Bird",
+        "lights": "Lights Off",
+        "occupancy": "1 Roommate",
+        "study": "Library",
+        "food": "Vegetarian",
+        "cleanliness": "Very Clean"
+      }
+    },
+    {
+      "id": "alex.fresh@college.edu",
+      "email": "alex.fresh@college.edu",
+      "name": "Alex Johnson",
+      "college": "State Technical University",
+      "verified": true,
+      "badge": "Freshman Guide",
+      "habits": {
+        "sleeping": "Night Owl",
+        "lights": "Lights On",
+        "occupancy": "2 Roommates",
+        "study": "In Room",
+        "food": "Non-Vegetarian",
+        "cleanliness": "Moderate"
+      }
+    },
+    {
+      "id": "roshani@vitvellore.edu",
+      "email": "roshani@vitvellore.edu",
+      "name": "Roshani",
+      "college": "University of Applied Sciences",
+      "verified": true,
+      "badge": "Student",
+      "habits": {
+        "sleeping": "Moderate",
+        "lights": "Lights Off",
+        "occupancy": "2 Roommates",
+        "study": "In Room",
+        "food": "Vegetarian",
+        "cleanliness": "Moderate"
+      }
+    },
+    {
+      "id": "eshan.kabra2025@vit.ac.in.edu",
+      "email": "eshan.kabra2025@vit.ac.in.edu",
+      "name": "Eshan Kabra2025",
+      "college": "University of Applied Sciences",
+      "verified": true,
+      "badge": "Student",
+      "habits": {
+        "sleeping": "Moderate",
+        "lights": "Lights Off",
+        "occupancy": "2 Roommates",
+        "study": "In Room",
+        "food": "Vegetarian",
+        "cleanliness": "Moderate"
+      }
+    },
+    {
+      "id": "roshanikhanijau@vitvellore.edu",
+      "email": "roshanikhanijau@vitvellore.edu",
+      "name": "Roshanikhanijau",
+      "college": "University of Applied Sciences",
+      "verified": true,
+      "badge": "Student",
+      "habits": {
+        "sleeping": "Moderate",
+        "lights": "Lights Off",
+        "occupancy": "2 Roommates",
+        "study": "In Room",
+        "food": "Vegetarian",
+        "cleanliness": "Moderate",
+        "bio": ""
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "item-1",
+      "title": "Engineering Mathematics Vol. 2 (NP Bali)",
+      "price": 250,
+      "description": "Mint condition textbook, barely used. Clean pages, no highlights or markings. Best for 2nd semester engineering students.",
+      "category": "Books",
+      "image": "books",
+      "sellerId": "sophia.senior@college.edu",
+      "sellerName": "Sophia Chen",
+      "sellerEmail": "sophia.senior@college.edu",
+      "sellerVerified": true,
+      "createdAt": "2026-05-18T10:00:00.000Z"
+    },
+    {
+      "id": "item-2",
+      "title": "Casio fx-991EX Scientific Calculator",
+      "price": 850,
+      "description": "Original Casio calculator, has solar panel and dual power. Ideal for calculus, matrices, and linear programming classes. 1 year old.",
+      "category": "Electronics",
+      "image": "calculator",
+      "sellerId": "sophia.senior@college.edu",
+      "sellerName": "Sophia Chen",
+      "sellerEmail": "sophia.senior@college.edu",
+      "sellerVerified": true,
+      "createdAt": "2026-05-19T14:30:00.000Z"
+    },
+    {
+      "id": "item-3",
+      "title": "Hero Sprint Single-Speed Bicycle",
+      "price": 3200,
+      "description": "Red commuter bicycle in excellent running condition. Brake pads recently replaced. Comes with front basket and rear combination lock.",
+      "category": "Cycles",
+      "image": "cycle",
+      "sellerId": "alex.fresh@college.edu",
+      "sellerName": "Alex Johnson",
+      "sellerEmail": "alex.fresh@college.edu",
+      "sellerVerified": true,
+      "createdAt": "2026-05-20T08:15:00.000Z"
+    },
+    {
+      "id": "item-4",
+      "title": "Ergonomic Mesh Study Chair",
+      "price": 1500,
+      "description": "Black adjustable mesh chair. Great lumbar support for those long exam prep nights. High quality wheels, fits under standard hostel desks.",
+      "category": "Furniture",
+      "image": "chair",
+      "sellerId": "alex.fresh@college.edu",
+      "sellerName": "Alex Johnson",
+      "sellerEmail": "alex.fresh@college.edu",
+      "sellerVerified": true,
+      "createdAt": "2026-05-20T09:45:00.000Z"
+    }
+  ],
+  "notes": [
+    {
+      "id": "note-1",
+      "title": "Data Structures & Algorithms - Complete Syllabus Notes",
+      "subject": "Data Structures & Algorithms",
+      "semester": 3,
+      "description": "Comprehensive semester-end exam handwritten notes covering Trees, Graphs, Sorting algorithms, Hash tables, and Big-O Analysis with code snippets.",
+      "fileSize": "4.8 MB",
+      "downloads": 143,
+      "rating": 4.8,
+      "ratingsCount": 18,
+      "uploaderId": "sophia.senior@college.edu",
+      "uploaderName": "Sophia Chen",
+      "uploaderVerified": true,
+      "createdAt": "2026-05-10T12:00:00.000Z"
+    },
+    {
+      "id": "note-2",
+      "title": "Computer Networks Lecture Notes & PYQs",
+      "subject": "Computer Networks",
+      "semester": 5,
+      "description": "Summarized lecture slides plus solved previous year question papers. Focuses heavily on TCP/IP stack layers, routing protocols, and subnetting.",
+      "fileSize": "6.2 MB",
+      "downloads": 87,
+      "rating": 4.6,
+      "ratingsCount": 12,
+      "uploaderId": "sophia.senior@college.edu",
+      "uploaderName": "Sophia Chen",
+      "uploaderVerified": true,
+      "createdAt": "2026-05-12T16:00:00.000Z"
+    },
+    {
+      "id": "note-3",
+      "title": "Physics-I Lab Manual & Graph Plots",
+      "subject": "Engineering Physics",
+      "semester": 1,
+      "description": "Ready-to-use lab readings, formulas, and pre-drawn Excel graph curves for Pendulum and Newton's Rings experiments. Standard first-year syllabus.",
+      "fileSize": "2.1 MB",
+      "downloads": 204,
+      "rating": 4.9,
+      "ratingsCount": 35,
+      "uploaderId": "alex.fresh@college.edu",
+      "uploaderName": "Alex Johnson",
+      "uploaderVerified": true,
+      "createdAt": "2026-05-15T09:00:00.000Z"
+    }
+  ],
+  "lostFound": [
+    {
+      "id": "lf-1",
+      "type": "lost",
+      "title": "Black leather wallet",
+      "location": "Near library cafeteria tables",
+      "description": "Contains my driving license and some cash. If found, please claim here! I will buy you coffee.",
+      "image": "wallet",
+      "reporterName": "Alex Johnson",
+      "reporterEmail": "alex.fresh@college.edu",
+      "createdAt": "2026-05-19T18:20:00.000Z",
+      "status": "claimed"
+    },
+    {
+      "id": "lf-2",
+      "type": "found",
+      "title": "Casio Scientific Calculator",
+      "location": "Room 302, Academic Block A",
+      "description": "Found on the corner desk after the 2:00 PM Chemistry class. Describe the sticker on the back to verify and claim.",
+      "image": "calculator",
+      "reporterName": "Sophia Chen",
+      "reporterEmail": "sophia.senior@college.edu",
+      "createdAt": "2026-05-20T11:00:00.000Z",
+      "status": "open"
+    }
+  ],
+  "events": [
+    {
+      "id": "event-1",
+      "title": "UniHack 2026: Annual Campus Hackathon",
+      "clubName": "STU Developer Club",
+      "date": "May 28, 2026 at 09:00 AM",
+      "location": "Main Seminar Hall, CSE Wing",
+      "description": "Assemble your team of 2-4 and join us for 24 hours of hacking, free food, mentor guidance, and prizes worth over ₹50,000! Theme: Campus Solutions.",
+      "rsvps": [
+        "sophia.senior@college.edu"
+      ],
+      "image": "hackathon"
+    },
+    {
+      "id": "event-2",
+      "title": "Battle of the Bands: Musical Fest",
+      "clubName": "Music & Arts Society",
+      "date": "June 05, 2026 at 05:00 PM",
+      "location": "Outdoor Amphitheater",
+      "description": "Come support your local campus bands as they compete for the trophy. Food trucks will be present, guest performance by the STU alumni metal band.",
+      "rsvps": [
+        "sophia.senior@college.edu",
+        "alex.fresh@college.edu"
+      ],
+      "image": "music"
+    }
+  ],
+  "feed": [
+    {
+      "id": "post-1",
+      "title": "Midterm Exam Tips for Data Structures?",
+      "content": "Does anyone know what topics Professor Miller focuses on for the midterms? Is there a lot of balance trees, or is it mostly stacks and queues? Really stressed about the programming section.",
+      "authorId": "alex.fresh@college.edu",
+      "authorName": "Alex Johnson",
+      "anonymous": false,
+      "likes": [
+        "sophia.senior@college.edu"
+      ],
+      "comments": [
+        {
+          "id": "comment-1",
+          "authorName": "Sophia Chen",
+          "anonymous": false,
+          "content": "Miller always asks at least one full traversal question on BSTs (pre, in, post order) and expects you to write a working function. Don't stress too much about AVL rotation implementation, just know the theory!",
+          "createdAt": "2026-05-20T14:40:00.000Z"
+        }
+      ],
+      "tags": [
+        "Academics",
+        "DSA"
+      ],
+      "createdAt": "2026-05-20T14:00:00.000Z"
+    },
+    {
+      "id": "post-2",
+      "title": "Hostel 3 Wifi is down AGAIN.",
+      "content": "Seriously, it is the third time this week the wifi has gone completely dead right at 10 PM. Can admin fix this, or are they turning it off on purpose?",
+      "authorId": "alex.fresh@college.edu",
+      "authorName": "Anonymous Student",
+      "anonymous": true,
+      "likes": [
+        "alex.fresh@college.edu",
+        "sophia.senior@college.edu"
+      ],
+      "comments": [
+        {
+          "id": "comment-2",
+          "authorName": "Anonymous Student",
+          "anonymous": true,
+          "content": "Same in Hostel 1. I'm literally tethering my mobile data to download assignments. Total joke.",
+          "createdAt": "2026-05-20T16:10:00.000Z"
+        }
+      ],
+      "tags": [
+        "Hostel",
+        "Complaints"
+      ],
+      "createdAt": "2026-05-20T15:30:00.000Z"
+    }
+  ],
+  "services": [
+    {
+      "id": "service-1",
+      "title": "1-on-1 Coding Tutoring (Python/C++/React)",
+      "providerName": "Sophia Chen",
+      "providerEmail": "sophia.senior@college.edu",
+      "category": "Coding Help",
+      "price": "₹300/hour",
+      "description": "Struggling with lab assignments or coding concepts? I am a 4th year CSE student. I can tutor you online or in the central library. Focus on building logic.",
+      "rating": 4.9
+    },
+    {
+      "id": "service-2",
+      "title": "Graphic Design & UI Mockup Services",
+      "providerName": "Alex Johnson",
+      "providerEmail": "alex.fresh@college.edu",
+      "category": "Graphic Design",
+      "price": "₹200/logo",
+      "description": "Need clean logos for your club events, flyers, or app designs? I do high-fidelity Figma designs and modern vector branding. Quick turnaround.",
+      "rating": 4.7
+    }
+  ],
+  "chats": [
+    {
+      "id": "alex.fresh@college.edu:sophia.senior@college.edu",
+      "messages": [
+        {
+          "sender": "alex.fresh@college.edu",
+          "text": "Hi Sophia, is the Casio Calculator still available?",
+          "timestamp": "2026-05-20T16:20:00.000Z"
+        },
+        {
+          "sender": "sophia.senior@college.edu",
+          "text": "Hey! Yes, it is still available. I can meet you in the academic block cafeteria tomorrow at lunch to hand it over.",
+          "timestamp": "2026-05-20T16:25:00.000Z"
+        },
+        {
+          "sender": "alex.fresh@college.edu",
+          "text": "Awesome! That works perfectly. I will message you when I get there.",
+          "timestamp": "2026-05-20T16:27:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "alex.fresh@college.edu:roshani@vitvellore.edu",
+      "messages": [
+        {
+          "sender": "roshani@vitvellore.edu",
+          "text": "hey",
+          "timestamp": "2026-05-20T18:11:46.452Z"
+        }
+      ]
+    }
+  ]
+}
