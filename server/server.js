@@ -512,8 +512,8 @@ app.post('/api/chats/message', (req, res) => {
 
   res.json({ success: true, message: newMessage });
 });
-// Catch-all route for React Router (must be placed after all API routes)
-app.get('*', (req, res) => {
+// Catch-all route for React Router (Express 5 syntax)
+app.get('/(.*)', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 
