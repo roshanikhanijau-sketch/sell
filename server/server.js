@@ -3,7 +3,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-// SQLite helper removed for Vercel support
+import { openDb } from './db.js'; // SQLite helper for auth
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,15 +14,10 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Serve static frontend files from the 'dist' directory (for production)
-app.use(express.static(path.join(__dirname, '../dist')));
-
 // ----------------------------------------------------
 // File-based DB helpers (for Marketplace, Notes, etc.)
 // ----------------------------------------------------
-const dbPath = process.env.VERCEL 
-  ? path.join('/tmp', 'db.json') 
-  : path.join(__dirname, 'db.json');
+const dbPath = path.join(__dirname, 'db.json');
 
 function readDB() {
   try {
@@ -59,7 +54,7 @@ app.get('/api/data', (req, res) => {
 });
 
 // ----------------------------------------------------
-// Auth Routes (JSON + OTP)
+// Auth Routes (SQLite + OTP)
 // ----------------------------------------------------
 
 // POST /api/auth/login  — sends OTP (new user auto-registered)
@@ -70,33 +65,24 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Email is required' });
     }
 
-    const fileDb = readDB();
-    const userEmail = email.toLowerCase();
-    let user = fileDb.users.find(u => u.email === userEmail);
+    const sqlDb = await openDb();
+    const user = await sqlDb.get('SELECT * FROM users WHERE email = ?', email.toLowerCase());
 
     // Strip .edu suffix from provided collegeId if present
     let college = collegeId ? collegeId.replace(/\.edu$/i, '') : null;
 
     if (!user) {
       // Auto-register new user
-      const name = userEmail.split('@')[0].split('.').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
+      const name = email.split('@')[0].split('.').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
       if (!college) {
         college = 'STU Campus';
       }
       const otp = generateOTP();
       const expires = Date.now() + 5 * 60 * 1000; // 5 minutes
-      
-      const newUser = {
-        email: userEmail,
-        name,
-        college_id: college,
-        verified: 0,
-        otp,
-        otp_expires: expires
-      };
-      
-      fileDb.users.push(newUser);
-      writeDB(fileDb);
+      await sqlDb.run(
+        'INSERT INTO users (email, name, college_id, verified, otp, otp_expires) VALUES (?,?,?,0,?,?)',
+        email.toLowerCase(), name, college, otp, expires
+      );
       console.log(`[OTP] New user ${email} → OTP: ${otp}`);
       return res.json({ success: true, message: 'OTP sent to email', otp }); // otp returned for dev/testing
     }
@@ -104,9 +90,7 @@ app.post('/api/auth/login', async (req, res) => {
     // Existing user — generate new OTP
     const otp = generateOTP();
     const expires = Date.now() + 5 * 60 * 1000;
-    user.otp = otp;
-    user.otp_expires = expires;
-    writeDB(fileDb);
+    await sqlDb.run('UPDATE users SET otp = ?, otp_expires = ? WHERE email = ?', otp, expires, email.toLowerCase());
     console.log(`[OTP] Existing user ${email} → OTP: ${otp}`);
     res.json({ success: true, message: 'OTP sent to email', otp }); // otp returned for dev/testing
   } catch (err) {
@@ -122,22 +106,18 @@ app.post('/api/auth/verify-otp', async (req, res) => {
     if (!email || !otp) {
       return res.status(400).json({ error: 'Email and OTP are required' });
     }
-    const fileDb = readDB();
-    const userEmail = email.toLowerCase();
-    const user = fileDb.users.find(u => u.email === userEmail);
-    
+    const sqlDb = await openDb();
+    const user = await sqlDb.get('SELECT * FROM users WHERE email = ?', email.toLowerCase());
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     if (user.otp !== otp || Date.now() > user.otp_expires) {
       return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
-    
-    user.verified = 1;
-    user.otp = null;
-    user.otp_expires = null;
-    writeDB(fileDb);
-    
+    await sqlDb.run(
+      'UPDATE users SET verified = 1, otp = NULL, otp_expires = NULL WHERE email = ?',
+      email.toLowerCase()
+    );
     const { otp: _o, otp_expires: _e, ...safeUser } = user;
     res.json({ success: true, user: safeUser });
   } catch (err) {
@@ -150,12 +130,10 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 app.delete('/api/auth/profile/:email', async (req, res) => {
   try {
     const { email } = req.params;
-    const fileDb = readDB();
-    
-    // Remove user
-    fileDb.users = fileDb.users.filter(u => u.email !== email.toLowerCase());
-    
+    const sqlDb = await openDb();
+    await sqlDb.run('DELETE FROM users WHERE email = ?', email.toLowerCase());
     // Cascade cleanup for items in file db
+    const fileDb = readDB();
     fileDb.items = fileDb.items.filter(i => i.sellerEmail.toLowerCase() !== email.toLowerCase());
     writeDB(fileDb);
     res.json({ success: true });
@@ -533,16 +511,7 @@ app.post('/api/chats/message', (req, res) => {
   res.json({ success: true, message: newMessage });
 });
 
-// Catch-all route to serve the React app for any unhandled requests (React Router)
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
+// Start Server
+app.listen(PORT, () => {
+  console.log(`Backend server is running on http://localhost:${PORT}`);
 });
-
-// Start Server (only if not running as a Vercel Serverless Function)
-if (!process.env.VERCEL) {
-  app.listen(PORT, () => {
-    console.log(`Backend server is running on http://localhost:${PORT}`);
-  });
-}
-
-export default app;
