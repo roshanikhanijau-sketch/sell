@@ -80,6 +80,14 @@
         "cleanliness": "Moderate",
         "bio": ""
       }
+    },
+    {
+      "email": "test@c.edu",
+      "name": "Test",
+      "college_id": "STU Campus",
+      "verified": 0,
+      "otp": "136664",
+      "otp_expires": 1780080299745
     }
   ],
   "items": [

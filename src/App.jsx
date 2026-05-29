@@ -201,7 +201,7 @@ export default function App() {
             <GraduationCap size={24} style={{ marginRight: '0.5rem', color: 'var(--primary-color)' }} />
             UniHub
           </div>
-          <span className="logo-tag">V1.0</span>
+
         </div>
 
         <nav className="nav-menu">

@@ -3,6 +3,7 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+// SQLite helper removed for Vercel support
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,9 +14,16 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-const dbPath = path.join(__dirname, 'db.json');
+// Serve static frontend files from the 'dist' directory (for production)
+app.use(express.static(path.join(__dirname, '../dist')));
 
-// Helper to read database
+// ----------------------------------------------------
+// File-based DB helpers (for Marketplace, Notes, etc.)
+// ----------------------------------------------------
+const dbPath = process.env.VERCEL 
+  ? path.join('/tmp', 'db.json') 
+  : path.join(__dirname, 'db.json');
+
 function readDB() {
   try {
     if (!fs.existsSync(dbPath)) {
@@ -29,7 +37,6 @@ function readDB() {
   }
 }
 
-// Helper to write database
 function writeDB(data) {
   try {
     fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
@@ -38,66 +45,124 @@ function writeDB(data) {
   }
 }
 
-// Ensure database is valid on startup
-let db = readDB();
+// OTP helper
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 // ----------------------------------------------------
 // Global Data Fetch
 // ----------------------------------------------------
 app.get('/api/data', (req, res) => {
-  db = readDB();
-  res.json(db);
+  const fileDb = readDB();
+  res.json(fileDb);
 });
 
 // ----------------------------------------------------
-// Auth Routes
+// Auth Routes (JSON + OTP)
 // ----------------------------------------------------
-app.post('/api/auth/login', (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
-  }
 
-  db = readDB();
-  let user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+// POST /api/auth/login  — sends OTP (new user auto-registered)
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, collegeId } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
 
-  if (!user) {
-    // Auto-signup if verified domains
-    const isEdu = email.endsWith('.edu') || email.includes('@college.') || email.includes('@uni.');
-    const name = email.split('@')[0].split('.').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
-    
-    user = {
-      id: email,
-      email: email,
-      name: name,
-      college: isEdu ? 'University of Applied Sciences' : 'STU Campus',
-      verified: true,
-      badge: 'Student',
-      habits: {
-        sleeping: 'Moderate',
-        lights: 'Lights Off',
-        occupancy: '2 Roommates',
-        study: 'In Room',
-        food: 'Vegetarian',
-        cleanliness: 'Moderate',
-        bio: ''
+    const fileDb = readDB();
+    const userEmail = email.toLowerCase();
+    let user = fileDb.users.find(u => u.email === userEmail);
+
+    // Strip .edu suffix from provided collegeId if present
+    let college = collegeId ? collegeId.replace(/\.edu$/i, '') : null;
+
+    if (!user) {
+      // Auto-register new user
+      const name = userEmail.split('@')[0].split('.').map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(' ');
+      if (!college) {
+        college = 'STU Campus';
       }
-    };
-    db.users.push(user);
-    writeDB(db);
+      const otp = generateOTP();
+      const expires = Date.now() + 5 * 60 * 1000; // 5 minutes
+      
+      const newUser = {
+        email: userEmail,
+        name,
+        college_id: college,
+        verified: 0,
+        otp,
+        otp_expires: expires
+      };
+      
+      fileDb.users.push(newUser);
+      writeDB(fileDb);
+      console.log(`[OTP] New user ${email} → OTP: ${otp}`);
+      return res.json({ success: true, message: 'OTP sent to email', otp }); // otp returned for dev/testing
+    }
+
+    // Existing user — generate new OTP
+    const otp = generateOTP();
+    const expires = Date.now() + 5 * 60 * 1000;
+    user.otp = otp;
+    user.otp_expires = expires;
+    writeDB(fileDb);
+    console.log(`[OTP] Existing user ${email} → OTP: ${otp}`);
+    res.json({ success: true, message: 'OTP sent to email', otp }); // otp returned for dev/testing
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Server error during login' });
   }
-  
-  res.json({ success: true, user });
 });
 
-app.delete('/api/auth/profile/:email', (req, res) => {
-  const { email } = req.params;
-  db = readDB();
-  db.users = db.users.filter(u => u.email.toLowerCase() !== email.toLowerCase());
-  // Basic cascade cleanup
-  db.items = db.items.filter(i => i.sellerEmail.toLowerCase() !== email.toLowerCase());
-  writeDB(db);
-  res.json({ success: true });
+// POST /api/auth/verify-otp
+app.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP are required' });
+    }
+    const fileDb = readDB();
+    const userEmail = email.toLowerCase();
+    const user = fileDb.users.find(u => u.email === userEmail);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (user.otp !== otp || Date.now() > user.otp_expires) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+    
+    user.verified = 1;
+    user.otp = null;
+    user.otp_expires = null;
+    writeDB(fileDb);
+    
+    const { otp: _o, otp_expires: _e, ...safeUser } = user;
+    res.json({ success: true, user: safeUser });
+  } catch (err) {
+    console.error('OTP verify error:', err);
+    res.status(500).json({ error: 'Server error during OTP verification' });
+  }
+});
+
+// DELETE /api/auth/profile/:email
+app.delete('/api/auth/profile/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const fileDb = readDB();
+    
+    // Remove user
+    fileDb.users = fileDb.users.filter(u => u.email !== email.toLowerCase());
+    
+    // Cascade cleanup for items in file db
+    fileDb.items = fileDb.items.filter(i => i.sellerEmail.toLowerCase() !== email.toLowerCase());
+    writeDB(fileDb);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete profile error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // ----------------------------------------------------
@@ -109,14 +174,14 @@ app.post('/api/items', (req, res) => {
     return res.status(400).json({ error: 'Missing required item details' });
   }
 
-  db = readDB();
+  const fileDb = readDB();
   const newItem = {
     id: 'item-' + Date.now(),
     title,
     price: Number(price),
     description: description || '',
     category,
-    image: category.toLowerCase(), // frontend will map this to a beautiful illustration
+    image: category.toLowerCase(),
     sellerId: sellerEmail,
     sellerName: sellerName || sellerEmail.split('@')[0],
     sellerEmail: sellerEmail,
@@ -124,8 +189,8 @@ app.post('/api/items', (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  db.items.unshift(newItem);
-  writeDB(db);
+  fileDb.items.unshift(newItem);
+  writeDB(fileDb);
   res.json({ success: true, item: newItem });
 });
 
@@ -138,7 +203,7 @@ app.post('/api/notes', (req, res) => {
     return res.status(400).json({ error: 'Missing required note details' });
   }
 
-  db = readDB();
+  const fileDb = readDB();
   const newNote = {
     id: 'note-' + Date.now(),
     title,
@@ -155,18 +220,18 @@ app.post('/api/notes', (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  db.notes.unshift(newNote);
-  writeDB(db);
+  fileDb.notes.unshift(newNote);
+  writeDB(fileDb);
   res.json({ success: true, note: newNote });
 });
 
 app.post('/api/notes/:id/download', (req, res) => {
   const { id } = req.params;
-  db = readDB();
-  const note = db.notes.find(n => n.id === id);
+  const fileDb = readDB();
+  const note = fileDb.notes.find(n => n.id === id);
   if (note) {
     note.downloads = (note.downloads || 0) + 1;
-    writeDB(db);
+    writeDB(fileDb);
     return res.json({ success: true, downloads: note.downloads });
   }
   res.status(404).json({ error: 'Note not found' });
@@ -174,19 +239,19 @@ app.post('/api/notes/:id/download', (req, res) => {
 
 app.post('/api/notes/:id/rate', (req, res) => {
   const { id } = req.params;
-  const { rating } = req.body; // number 1-5
+  const { rating } = req.body;
   if (!rating || rating < 1 || rating > 5) {
     return res.status(400).json({ error: 'Invalid rating' });
   }
 
-  db = readDB();
-  const note = db.notes.find(n => n.id === id);
+  const fileDb = readDB();
+  const note = fileDb.notes.find(n => n.id === id);
   if (note) {
     const prevCount = note.ratingsCount || 0;
     const prevRating = note.rating || 0;
     note.ratingsCount = prevCount + 1;
     note.rating = Number(((prevRating * prevCount + rating) / (prevCount + 1)).toFixed(1));
-    writeDB(db);
+    writeDB(fileDb);
     return res.json({ success: true, rating: note.rating, ratingsCount: note.ratingsCount });
   }
   res.status(404).json({ error: 'Note not found' });
@@ -194,7 +259,6 @@ app.post('/api/notes/:id/rate', (req, res) => {
 
 app.post('/api/notes/summarize', (req, res) => {
   const { title, description } = req.body;
-  // Simulated AI Summarization
   const summary = `
 📝 **AI Note Summary: ${title || 'Notes'}**
 
@@ -217,11 +281,11 @@ app.post('/api/roommates/profile', (req, res) => {
     return res.status(400).json({ error: 'Missing email or habits profile' });
   }
 
-  db = readDB();
-  const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  const fileDb = readDB();
+  const user = fileDb.users.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (user) {
     user.habits = habits;
-    writeDB(db);
+    writeDB(fileDb);
     res.json({ success: true, user });
   } else {
     res.status(404).json({ error: 'User not found' });
@@ -237,7 +301,7 @@ app.post('/api/lostfound', (req, res) => {
     return res.status(400).json({ error: 'Missing required lost & found details' });
   }
 
-  db = readDB();
+  const fileDb = readDB();
   const newPost = {
     id: 'lf-' + Date.now(),
     type,
@@ -251,18 +315,18 @@ app.post('/api/lostfound', (req, res) => {
     status: 'open'
   };
 
-  db.lostFound.unshift(newPost);
-  writeDB(db);
+  fileDb.lostFound.unshift(newPost);
+  writeDB(fileDb);
   res.json({ success: true, post: newPost });
 });
 
 app.post('/api/lostfound/:id/claim', (req, res) => {
   const { id } = req.params;
-  db = readDB();
-  const post = db.lostFound.find(p => p.id === id);
+  const fileDb = readDB();
+  const post = fileDb.lostFound.find(p => p.id === id);
   if (post) {
     post.status = 'claimed';
-    writeDB(db);
+    writeDB(fileDb);
     return res.json({ success: true, post });
   }
   res.status(404).json({ error: 'Post not found' });
@@ -278,8 +342,8 @@ app.post('/api/events/:id/rsvp', (req, res) => {
     return res.status(400).json({ error: 'Email is required' });
   }
 
-  db = readDB();
-  const event = db.events.find(e => e.id === id);
+  const fileDb = readDB();
+  const event = fileDb.events.find(e => e.id === id);
   if (event) {
     if (!event.rsvps) event.rsvps = [];
     const index = event.rsvps.indexOf(email);
@@ -288,7 +352,7 @@ app.post('/api/events/:id/rsvp', (req, res) => {
     } else {
       event.rsvps.splice(index, 1);
     }
-    writeDB(db);
+    writeDB(fileDb);
     return res.json({ success: true, rsvps: event.rsvps });
   }
   res.status(404).json({ error: 'Event not found' });
@@ -303,7 +367,7 @@ app.post('/api/feed', (req, res) => {
     return res.status(400).json({ error: 'Missing required post fields' });
   }
 
-  db = readDB();
+  const fileDb = readDB();
   const newPost = {
     id: 'post-' + Date.now(),
     postType: postType || 'general',
@@ -320,8 +384,8 @@ app.post('/api/feed', (req, res) => {
     createdAt: new Date().toISOString()
   };
 
-  db.feed.unshift(newPost);
-  writeDB(db);
+  fileDb.feed.unshift(newPost);
+  writeDB(fileDb);
   res.json({ success: true, post: newPost });
 });
 
@@ -332,8 +396,8 @@ app.post('/api/feed/:id/like', (req, res) => {
     return res.status(400).json({ error: 'Email is required' });
   }
 
-  db = readDB();
-  const post = db.feed.find(p => p.id === id);
+  const fileDb = readDB();
+  const post = fileDb.feed.find(p => p.id === id);
   if (post) {
     if (!post.likes) post.likes = [];
     const index = post.likes.indexOf(email);
@@ -342,7 +406,7 @@ app.post('/api/feed/:id/like', (req, res) => {
     } else {
       post.likes.splice(index, 1);
     }
-    writeDB(db);
+    writeDB(fileDb);
     return res.json({ success: true, likes: post.likes });
   }
   res.status(404).json({ error: 'Post not found' });
@@ -355,8 +419,8 @@ app.post('/api/feed/:id/comment', (req, res) => {
     return res.status(400).json({ error: 'Comment content is required' });
   }
 
-  db = readDB();
-  const post = db.feed.find(p => p.id === id);
+  const fileDb = readDB();
+  const post = fileDb.feed.find(p => p.id === id);
   if (post) {
     const newComment = {
       id: 'comment-' + Date.now(),
@@ -367,7 +431,7 @@ app.post('/api/feed/:id/comment', (req, res) => {
     };
     if (!post.comments) post.comments = [];
     post.comments.push(newComment);
-    writeDB(db);
+    writeDB(fileDb);
     return res.json({ success: true, comments: post.comments });
   }
   res.status(404).json({ error: 'Post not found' });
@@ -382,7 +446,7 @@ app.post('/api/services', (req, res) => {
     return res.status(400).json({ error: 'Missing required service fields' });
   }
 
-  db = readDB();
+  const fileDb = readDB();
   const newService = {
     id: 'service-' + Date.now(),
     title,
@@ -394,8 +458,8 @@ app.post('/api/services', (req, res) => {
     rating: 5.0
   };
 
-  db.services.unshift(newService);
-  writeDB(db);
+  fileDb.services.unshift(newService);
+  writeDB(fileDb);
   res.json({ success: true, service: newService });
 });
 
@@ -405,10 +469,10 @@ app.post('/api/services', (req, res) => {
 app.get('/api/chats/:email1/:email2', (req, res) => {
   const { email1, email2 } = req.params;
   const chatId = [email1.toLowerCase(), email2.toLowerCase()].sort().join(':');
-  
-  db = readDB();
-  const chat = db.chats.find(c => c.id === chatId);
-  
+
+  const fileDb = readDB();
+  const chat = fileDb.chats.find(c => c.id === chatId);
+
   if (chat) {
     res.json(chat.messages);
   } else {
@@ -423,39 +487,39 @@ app.post('/api/chats/message', (req, res) => {
   }
 
   const chatId = [sender.toLowerCase(), recipient.toLowerCase()].sort().join(':');
-  
-  db = readDB();
-  let chat = db.chats.find(c => c.id === chatId);
-  
+
+  const fileDb = readDB();
+  let chat = fileDb.chats.find(c => c.id === chatId);
+
   if (!chat) {
     chat = { id: chatId, messages: [] };
-    db.chats.push(chat);
+    fileDb.chats.push(chat);
   }
-  
+
   const newMessage = {
     sender,
     text,
     timestamp: new Date().toISOString()
   };
-  
+
   chat.messages.push(newMessage);
-  writeDB(db);
-  
-  // Simulated auto-reply from Sophia Chen or Alex Johnson to make chat interactive!
+  writeDB(fileDb);
+
+  // Simulated auto-reply
   if (recipient.includes('@college.edu')) {
     setTimeout(() => {
       const refreshedDB = readDB();
       const directChat = refreshedDB.chats.find(c => c.id === chatId);
       if (directChat) {
-        let replyText = "Hey! Let me double check and get back to you soon. Can we meet near the library?";
+        let replyText = 'Hey! Let me double check and get back to you soon. Can we meet near the library?';
         if (text.toLowerCase().includes('calculator')) {
-          replyText = "Sure, I have it ready. Standard price is 850, but I can do 800 for quick pickup!";
+          replyText = 'Sure, I have it ready. Standard price is 850, but I can do 800 for quick pickup!';
         } else if (text.toLowerCase().includes('roommate')) {
           replyText = "Awesome, let's grab coffee tomorrow at the food court to see if we match!";
         } else if (text.toLowerCase().includes('math') || text.toLowerCase().includes('book')) {
-          replyText = "Yeah, the book is available. Very clean pages. Let me know when you want to collect it.";
+          replyText = 'Yeah, the book is available. Very clean pages. Let me know when you want to collect it.';
         }
-        
+
         directChat.messages.push({
           sender: recipient,
           text: replyText,
@@ -465,11 +529,20 @@ app.post('/api/chats/message', (req, res) => {
       }
     }, 2000);
   }
-  
+
   res.json({ success: true, message: newMessage });
 });
 
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Backend server is running on http://localhost:${PORT}`);
+// Catch-all route to serve the React app for any unhandled requests (React Router)
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
+
+// Start Server (only if not running as a Vercel Serverless Function)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Backend server is running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
